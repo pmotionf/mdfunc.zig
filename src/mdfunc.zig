@@ -2,6 +2,488 @@ const std = @import("std");
 const builtin = @import("builtin");
 const native_arch = builtin.cpu.arch;
 
+/// Open a communication line by specifying a channel number of communication
+/// line.
+pub fn open(chan: Channel) Error!i32 {
+    var path: i32 = undefined;
+    try codeToError(mdOpen(@intFromEnum(chan), -1, &path));
+    return path;
+}
+
+/// Close a communication line by specifying a communication line path.
+pub fn close(path: i32) Error!void {
+    try codeToError(mdClose(path));
+}
+
+/// Close a communication line by specifying a communication line path.
+/// Batch write data to the devices on the target station for the number of
+/// written data bytes from the start device number. / Send data to the
+/// specified channel number of the target station.
+pub fn send(
+    /// Path of channel
+    path: i32,
+    /// Station number
+    stno: i16,
+    /// Device type
+    devtyp: Device,
+    /// Start device number / Channel number
+    devno: i16,
+    /// Written data / Send data
+    data: []i16,
+) Error!i16 {
+    var local_size: i16 = @truncate(data.len * 2);
+    try codeToError(mdSend(
+        path,
+        stno,
+        @intFromEnum(devtyp),
+        devno,
+        &local_size,
+        data.ptr,
+    ));
+    return local_size;
+}
+
+/// Batch read data from the devices on the target station for the number of
+/// read data bytes from the start device number. / Read data of the specified
+/// channel number from the data which are received by the own station.
+pub fn receive(
+    /// Path of channel
+    path: i32,
+    /// Station number
+    stno: i16,
+    /// Device type
+    devtyp: Device,
+    /// Start device number / Channel number
+    devno: i16,
+    /// Read data / Receive data with send source information
+    data: []i16,
+) Error!i16 {
+    var local_size: i16 = @truncate(data.len * 2);
+    try codeToError(mdReceive(
+        path,
+        stno,
+        @intFromEnum(devtyp),
+        devno,
+        &local_size,
+        data.ptr,
+    ));
+    return local_size;
+}
+
+/// Set the specified bit device on the target station (to ON).
+pub fn devSet(
+    /// Path of channel
+    path: i32,
+    /// Station number
+    stno: i16,
+    /// Device type
+    devtyp: Device,
+    /// Specified device number
+    devno: i16,
+) Error!void {
+    try codeToError(mdDevSet(path, stno, @intFromEnum(devtyp), devno));
+}
+
+/// Reset the specified bit device on the target station (to OFF).
+pub fn devRst(
+    /// Path of channel
+    path: i32,
+    /// Station number
+    stno: i16,
+    /// Device type
+    devtyp: Device,
+    /// Specified device number
+    devno: i16,
+) Error!void {
+    try codeToError(mdDevRst(path, stno, @intFromEnum(devtyp), devno));
+}
+
+/// Write data to the devices on the target station specified with the
+/// randomly-specified devices.
+pub fn randW(
+    /// Path of channel
+    path: i32,
+    /// Station number
+    stno: i16,
+    /// Randomly-specified device
+    dev: []i16,
+    /// Written data
+    buf: []i16,
+) Error!void {
+    try codeToError(mdRandW(path, stno, dev.ptr, buf.ptr, 0));
+}
+
+/// Read the device specified with the randomly-specified devices from the
+/// target station.
+pub fn randR(
+    /// Path of channel
+    path: i32,
+    /// Station number
+    stno: i16,
+    /// Randomly-specified device
+    dev: []i16,
+    /// Read data
+    buf: []i16,
+) Error!void {
+    const read_size: i16 = @truncate(buf.len * 2);
+    try codeToError(mdRandR(path, stno, dev.ptr, buf.ptr, read_size));
+}
+
+/// Remotely operate a CPU on the target station. (Remote RUN/STOP/PAUSE)
+pub fn control(
+    /// Path of a channel
+    path: i32,
+    /// Station number
+    stno: i16,
+    /// Command code
+    buf: CommandCode,
+) Error!void {
+    try codeToError(mdControl(path, stno, @intFromEnum(buf)));
+}
+
+pub const CommandCode = enum(i16) {
+    /// Remote RUN
+    remote_run = 0,
+    /// Remote STOP
+    remote_stop = 1,
+    /// Remote PAUSE
+    remote_pause = 2,
+};
+
+/// Read a model name code of the CPU on the target station.
+pub fn typeRead(
+    /// Path of a channel
+    path: i32,
+    /// Station number
+    stno: i16,
+) Error!i16 {
+    var model_name_code: i16 = undefined;
+    try codeToError(mdTypeRead(path, stno, &model_name_code));
+    return model_name_code;
+}
+
+/// Read the LED information of the board.
+pub fn bdLedRead(
+    /// Path of channel
+    path: i32,
+    /// Read data; must be of length 5 if reading CC-Link Ver.2 board,
+    /// otherwise must be of length 2.
+    buf: []i16,
+) Error!void {
+    try codeToError(mdBdLedRead(path, buf.ptr));
+}
+
+/// Read the mode in which the board is currently operating.
+pub fn bdModRead(
+    /// Path of channel
+    path: i32,
+) Error!i16 {
+    var mode: i16 = undefined;
+    try codeToError(mdBdModRead(path, &mode));
+    return mode;
+}
+
+/// Change the modes of a board temporarily.
+pub fn bdModSet(
+    /// Path of channel
+    path: i32,
+    /// Mode
+    mode: i16,
+) Error!void {
+    try codeToError(mdBdModSet(path, mode));
+}
+
+/// Reset a board.
+pub fn bdRst(
+    /// Path of channel
+    path: i32,
+) Error!void {
+    try codeToError(mdBdRst(path));
+}
+
+/// Read a board switch status (such as station number setting, board number
+/// setting, board identification, and I/O address setting information).
+pub fn bdSwRead(
+    /// Path of channel
+    path: i32,
+    /// Read data
+    buf: *[6]i16,
+) Error!void {
+    try codeToError(mdBdSwRead(path, buf));
+}
+
+/// Read the version information of the board.
+pub fn bdVerRead(
+    /// Path of channel
+    path: i32,
+    /// Read data
+    buf: *[32]i16,
+) Error!void {
+    try codeToError(mdBdVerRead(path, buf));
+}
+
+/// Refresh a programmable controller device address table which is the
+/// internal data of the MELSEC data link library.
+pub fn init(
+    /// Path of channel
+    path: i32,
+) Error!void {
+    try codeToError(mdInit(path));
+}
+
+/// Wait an occurrence of event until the time out.
+pub fn waitBdEvent(
+    /// Path of channel
+    path: i32,
+    /// Waiting event number
+    eventno: []i16,
+    /// Timeout value
+    timeout: i32,
+    /// Event detail information
+    details: *[4]i16,
+) Error!i16 {
+    var driven_event_number: i16 = undefined;
+    try codeToError(mdWaitBdEvent(
+        path,
+        eventno.ptr,
+        timeout,
+        &driven_event_number,
+        details,
+    ));
+    return driven_event_number;
+}
+
+/// Batch write data to the devices on the target station for the number of
+/// written data bytes from the start device number. / Send data to the
+/// specified channel number of the target station.
+pub fn sendEx(
+    /// Path of channel
+    path: i32,
+    /// Network number
+    netno: i32,
+    /// Station number,
+    stno: i32,
+    /// Device type
+    devtyp: Device,
+    /// Start device number / Channel number
+    devno: i32,
+    /// Written data / Send data
+    data: []i16,
+) Error!i32 {
+    var local_size: i32 = @truncate(data.len * 2);
+    try codeToError(mdSendEx(
+        path,
+        netno,
+        stno,
+        @intFromEnum(devtyp),
+        devno,
+        &local_size,
+        data.ptr,
+    ));
+    return local_size;
+}
+
+/// Batch read data from the devices on the target station for the number of
+/// read data bytes from the start device number. / Read data of the specified
+/// channel number from the data which are received by the own station.
+pub fn receiveEx(
+    /// Path of channel
+    path: i32,
+    /// Network number
+    netno: i32,
+    /// Station number
+    stno: i32,
+    /// Device type
+    devtyp: Device,
+    /// Start device number / Channel number
+    devno: i32,
+    /// Read data / Receive data
+    data: []i16,
+) Error!i32 {
+    var local_size: i32 = @truncate(data.len * 2);
+    try codeToError(mdReceiveEx(
+        path,
+        netno,
+        stno,
+        @intFromEnum(devtyp),
+        devno,
+        &local_size,
+        data.ptr,
+    ));
+    return local_size;
+}
+
+/// Set the specified bit device on the target station (to ON).
+pub fn devSetEx(
+    /// Path of channel
+    path: i32,
+    /// Network number
+    netno: i32,
+    /// Station number
+    stno: i32,
+    /// Device type
+    devtyp: Device,
+    /// Specified device number
+    devno: i32,
+) Error!void {
+    try codeToError(mdDevSetEx(
+        path,
+        netno,
+        stno,
+        @intFromEnum(devtyp),
+        devno,
+    ));
+}
+
+/// Reset the specified bit device on the target station (to OFF).
+pub fn devRstEx(
+    /// Path of channel
+    path: i32,
+    /// Network number
+    netno: i32,
+    /// Station number
+    stno: i32,
+    /// Device type
+    devtyp: i32,
+    /// Specified device number
+    devno: i32,
+) Error!void {
+    try codeToError(mdDevRstEx(
+        path,
+        netno,
+        stno,
+        @intFromEnum(devtyp),
+        devno,
+    ));
+}
+
+/// Write data to the devices on the target station specified with the
+/// randomly-specified devices.
+pub fn randWEx(
+    /// Path of channel
+    path: i32,
+    /// Network number
+    netno: i32,
+    /// Station number
+    stno: i32,
+    /// Randomly-specified device
+    dev: []i32,
+    /// Written data
+    buf: []i16,
+) Error!void {
+    try codeToError(mdRandWEx(path, netno, stno, dev.ptr, buf.ptr, 0));
+}
+
+/// Read the device specified with the randomly-specified devices from the
+/// target station.
+pub fn randREx(
+    /// Path of channel
+    path: i32,
+    /// Network number
+    netno: i32,
+    /// Station number
+    stno: i32,
+    /// Randomly-specified device
+    dev: []i32,
+    /// Read data
+    buf: []i16,
+) Error!void {
+    const read_buf_bytes: i32 = @truncate(buf.len * 2);
+    try codeToError(mdRandREx(
+        path,
+        netno,
+        stno,
+        dev.ptr,
+        buf.ptr,
+        read_buf_bytes,
+    ));
+}
+
+/// Write data to the buffer memory of a target station (remote device station
+/// of CC-Link IE Field Network).
+pub fn remBufWriteEx(
+    /// Path of channel
+    path: i32,
+    /// Network number
+    netno: i32,
+    /// Station number
+    stno: i32,
+    /// Offset
+    offset: i32,
+    /// Written data
+    data: []i16,
+) Error!i32 {
+    const data_bytes: i32 = @truncate(data.len * 2);
+    try codeToError(mdRemBufWriteEx(
+        path,
+        netno,
+        stno,
+        offset,
+        &data_bytes,
+        data.ptr,
+    ));
+}
+
+/// Read data from the buffer memory of a target station (remote device station
+/// of CC-Link IE Field Network).
+pub fn remBufReadEx(
+    /// Path of channel
+    path: i32,
+    /// Network number
+    netno: i32,
+    /// Station number
+    stno: i32,
+    /// Offset
+    offset: i32,
+    /// Read data
+    data: []i16,
+) Error!void {
+    const data_bytes: i32 = @truncate(data.len * 2);
+    try codeToError(mdRemBufReadEx(
+        path,
+        netno,
+        stno,
+        offset,
+        &data_bytes,
+        data.ptr,
+    ));
+}
+
+pub const Channel = enum(i16) {
+    /// MELSECNET/H (1 slot)
+    melsecnet_h_1slot = 51,
+    /// MELSECNET/H (2 slot)
+    melsecnet_h_2slot = 52,
+    /// MELSECNET/H (3 slot)
+    melsecnet_h_3slot = 53,
+    /// MELSECNET/H (4 slot)
+    melsecnet_h_4slot = 54,
+    /// CC-Link (1 slot)
+    cc_link_1slot = 81,
+    /// CC-Link (2 slot)
+    cc_link_2slot = 82,
+    /// CC-Link (3 slot)
+    cc_link_3slot = 83,
+    /// CC-Link (4 slot)
+    cc_link_4slot = 84,
+    /// CC-Link IE Controller Network (Channel No.151)
+    cc_link_ie_controller_network_151 = 151,
+    /// CC-Link IE Controller Network (Channel No.152)
+    cc_link_ie_controller_network_152 = 152,
+    /// CC-Link IE Controller Network (Channel No.153)
+    cc_link_ie_controller_network_153 = 153,
+    /// CC-Link IE Controller Network (Channel No.154)
+    cc_link_ie_controller_network_154 = 154,
+    /// CC-Link IE Field Network (Channel No.181)
+    cc_link_ie_field_network_181 = 181,
+    /// CC-Link IE Field Network (Channel No.182)
+    cc_link_ie_field_network_182 = 182,
+    /// CC-Link IE Field Network (Channel No.183)
+    cc_link_ie_field_network_183 = 183,
+    /// CC-Link IE Field Network (Channel No.184)
+    cc_link_ie_field_network_184 = 184,
+};
+
 // TODO: Ensure this is actually based off of target arch, not native.
 const WINAPI: std.builtin.CallingConvention = if (native_arch == .x86)
     .Stdcall
@@ -25,6 +507,7 @@ pub extern "MdFunc32" fn mdClose(
     path: i32,
 ) callconv(WINAPI) i16;
 
+/// Close a communication line by specifying a communication line path.
 /// Batch write data to the devices on the target station for the number of
 /// written data bytes from the start device number. / Send data to the
 /// specified channel number of the target station.
@@ -171,7 +654,7 @@ pub extern "MdFunc32" fn mdBdSwRead(
     /// Path of channel
     path: i32,
     /// Read data
-    buf: [*]i16,
+    buf: *[6]i16,
 ) callconv(WINAPI) i16;
 
 /// Read the version information of the board.
@@ -179,7 +662,7 @@ pub extern "MdFunc32" fn mdBdVerRead(
     /// Path of channel
     path: i32,
     /// Read data
-    buf: [*]i16,
+    buf: *[32]i16,
 ) callconv(WINAPI) i16;
 
 /// Refresh a programmable controller device address table which is the
@@ -297,7 +780,7 @@ pub extern "MdFunc32" fn mdRandREx(
     netno: i32,
     /// Station number
     stno: i32,
-    /// Randomly specified device
+    /// Randomly-specified device
     dev: [*]i32,
     /// Read data
     buf: [*]i16,
@@ -338,364 +821,6 @@ pub extern "MdFunc32" fn mdRemBufReadEx(
     /// Read data
     data: [*]i16,
 ) callconv(WINAPI) i32;
-
-pub const CcLinkV2 = struct {
-    pub const Station = struct {
-        /// Returns if provided station number is own station.
-        pub fn isOwn(station_num: u8) bool {
-            return station_num == 255;
-        }
-
-        /// Returns if provided station number is other station.
-        pub fn isOther(station_num: u8) bool {
-            return station_num >= 0 and station_num < 64;
-        }
-
-        /// Returns if provided station number is a logical number set by the
-        /// MELSEC Device Monitor Utility.
-        pub fn isLogicalSetByUtility(station_num: u8) bool {
-            return station_num >= 65 and station_num < 240;
-        }
-    };
-
-    pub const StationEx = struct {
-        /// Returns if provided station number is own station.
-        pub fn isOwn(network_num: u8, station_num: u8) bool {
-            return network_num == 0 and station_num == 255;
-        }
-
-        /// Returns if provided station number is other station.
-        pub fn isOther(network_num: u8, station_num: u8) bool {
-            return network_num == 0 and station_num >= 0 and station_num < 64;
-        }
-
-        /// Returns if provided station number is a logical number set by the
-        /// MELSEC Device Monitor Utility.
-        pub fn isLogicalSetByUtility(network_num: u8, station_num: u8) bool {
-            return network_num == 0 and
-                station_num >= 65 and
-                station_num < 240;
-        }
-    };
-};
-
-pub fn open(chan: Channel, mode: i16) MdFuncError!i32 {
-    var path: i32 = undefined;
-    try codeToError(mdOpen(@intFromEnum(chan), mode, &path));
-    return path;
-}
-
-pub fn close(path: i32) MdFuncError!void {
-    try codeToError(mdClose(path));
-}
-
-pub fn send(
-    path: i32,
-    stno: i16,
-    devtyp: i16,
-    devno: i16,
-    size: *i16,
-    comptime T: type,
-    data: []const T,
-) MdFuncError!void {
-    try codeToError(mdSend(
-        path,
-        stno,
-        devtyp,
-        devno,
-        size,
-        @constCast(data.ptr),
-    ));
-}
-
-pub fn receive(
-    path: i32,
-    stno: i16,
-    devtyp: Device,
-    devno: i16,
-    size: *i16,
-    comptime T: type,
-    data: []T,
-) MdFuncError!void {
-    try codeToError(mdReceive(
-        path,
-        stno,
-        @intFromEnum(devtyp),
-        devno,
-        size,
-        data.ptr,
-    ));
-}
-
-pub fn devSet(
-    path: i32,
-    stno: i16,
-    devtyp: Device,
-    devno: i16,
-) MdFuncError!void {
-    try codeToError(mdDevSet(path, stno, @intFromEnum(devtyp), devno));
-}
-
-pub fn devRst(
-    path: i32,
-    stno: i16,
-    devtyp: Device,
-    devno: i16,
-) MdFuncError!void {
-    try codeToError(mdDevRst(path, stno, @intFromEnum(devtyp), devno));
-}
-
-pub fn randW(
-    path: i32,
-    stno: i16,
-    comptime X: type,
-    dev: []X,
-    comptime Y: type,
-    buf: []Y,
-) MdFuncError!void {
-    try codeToError(mdRandW(path, stno, dev.ptr, buf.ptr, 0));
-}
-
-pub fn randR(
-    path: i32,
-    stno: i16,
-    comptime X: type,
-    dev: []X,
-    comptime Y: type,
-    buf: []Y,
-) MdFuncError!void {
-    try codeToError(mdRandR(path, stno, dev.ptr, buf.ptr, buf.len));
-}
-
-pub fn control(
-    path: i32,
-    stno: i16,
-    buf: i16,
-) MdFuncError!void {
-    try codeToError(mdControl(path, stno, buf));
-}
-
-pub fn typeRead(
-    path: i32,
-    stno: i16,
-    buf: *i16,
-) MdFuncError!void {
-    try codeToError(mdTypeRead(path, stno, buf));
-}
-
-pub fn bdLedRead(path: i32, comptime T: type, buf: []T) MdFuncError!void {
-    try codeToError(mdBdLedRead(path, buf.ptr));
-}
-
-pub fn bdModRead(path: i32, mode: *i16) MdFuncError!void {
-    try codeToError(mdBdModRead(path, mode));
-}
-
-pub fn bdModSet(path: i32, mode: i16) MdFuncError!void {
-    try codeToError(mdBdModSet(path, mode));
-}
-
-pub fn bdRst(path: i32) MdFuncError!void {
-    try codeToError(mdBdRst(path));
-}
-
-pub fn bdSwRead(path: i32, buf: []i16) MdFuncError!void {
-    try codeToError(mdBdSwRead(path, buf.ptr));
-}
-
-pub fn bdVerRead(path: i32, buf: []i16) MdFuncError!void {
-    try codeToError(mdBdVerRead(path, buf.ptr));
-}
-
-pub fn init(path: i32) MdFuncError!void {
-    try codeToError(mdInit(path));
-}
-
-pub fn waitBdEvent(
-    path: i32,
-    comptime T: type,
-    eventno: []T,
-    timeout: i32,
-    signaledno: *i16,
-    details: *[4]i16,
-) MdFuncError!void {
-    try codeToError(mdWaitBdEvent(
-        path,
-        eventno.ptr,
-        timeout,
-        signaledno,
-        details,
-    ));
-}
-
-pub fn sendEx(
-    path: i32,
-    netno: i32,
-    stno: i32,
-    devtyp: Device,
-    devno: i32,
-    size: *i32,
-    comptime T: type,
-    data: []T,
-) MdFuncError!void {
-    try codeToError(mdSendEx(
-        path,
-        netno,
-        stno,
-        @intCast(@intFromEnum(devtyp)),
-        devno,
-        size,
-        @constCast(data.ptr),
-    ));
-}
-
-pub fn receiveEx(
-    path: i32,
-    netno: i32,
-    stno: i32,
-    devtyp: Device,
-    devno: i32,
-    size: *i32,
-    comptime T: type,
-    data: []T,
-) MdFuncError!void {
-    try codeToError(mdReceiveEx(
-        path,
-        netno,
-        stno,
-        @intCast(@intFromEnum(devtyp)),
-        devno,
-        size,
-        data.ptr,
-    ));
-}
-
-pub fn devSetEx(
-    path: i32,
-    netno: i32,
-    stno: i32,
-    devtyp: Device,
-    devno: i32,
-) MdFuncError!void {
-    try codeToError(mdDevSetEx(
-        path,
-        netno,
-        stno,
-        @intCast(@intFromEnum(devtyp)),
-        devno,
-    ));
-}
-
-pub fn devRstEx(
-    path: i32,
-    netno: i32,
-    stno: i32,
-    devtyp: Device,
-    devno: i32,
-) MdFuncError!void {
-    try codeToError(mdDevRstEx(
-        path,
-        netno,
-        stno,
-        @intCast(@intFromEnum(devtyp)),
-        devno,
-    ));
-}
-
-pub fn randWEx(
-    path: i32,
-    netno: i32,
-    stno: i32,
-    dev: []i32,
-    comptime T: type,
-    buf: []T,
-    bufsize: i32,
-) MdFuncError!void {
-    try codeToError(mdRandWEx(
-        path,
-        netno,
-        stno,
-        dev.ptr,
-        buf.ptr,
-        bufsize,
-    ));
-}
-
-pub fn randREx(
-    path: i32,
-    netno: i32,
-    stno: i32,
-    dev: []i32,
-    comptime T: type,
-    buf: []T,
-    bufsize: i32,
-) MdFuncError!void {
-    try codeToError(mdRandREx(
-        path,
-        netno,
-        stno,
-        dev.ptr,
-        buf.ptr,
-        bufsize,
-    ));
-}
-
-pub fn remBufWriteEx(
-    path: i32,
-    netno: i32,
-    stno: i32,
-    offset: i32,
-    size: *i32,
-    comptime T: type,
-    data: []T,
-) MdFuncError!void {
-    try codeToError(mdRemBufWriteEx(
-        path,
-        netno,
-        stno,
-        offset,
-        size,
-        data.ptr,
-    ));
-}
-
-pub fn remBufReadEx(
-    path: i32,
-    netno: i32,
-    stno: i32,
-    offset: i32,
-    size: *i32,
-    comptime T: type,
-    data: []T,
-) MdFuncError!void {
-    try codeToError(mdRemBufReadEx(
-        path,
-        netno,
-        stno,
-        offset,
-        size,
-        data.ptr,
-    ));
-}
-
-pub const Channel = enum(i16) {
-    melsec_net_h_slot1 = 51,
-    melsec_net_h_slot2 = 52,
-    melsec_net_h_slot3 = 53,
-    melsec_net_h_slot4 = 54,
-    cc_link_slot1 = 81,
-    cc_link_slot2 = 82,
-    cc_link_slot3 = 83,
-    cc_link_slot4 = 84,
-    cc_link_ie_controller_network_151 = 151,
-    cc_link_ie_controller_network_152 = 152,
-    cc_link_ie_controller_network_153 = 153,
-    cc_link_ie_controller_network_154 = 154,
-    cc_link_ie_field_network_181 = 181,
-    cc_link_ie_field_network_182 = 182,
-    cc_link_ie_field_network_183 = 183,
-    cc_link_ie_field_network_184 = 184,
-};
 
 pub const Device = def: {
     var result = std.builtin.Type.Enum{
@@ -831,7 +956,7 @@ pub const Device = def: {
     break :def @Type(.{ .Enum = result });
 };
 
-pub const MdFuncError = error{
+pub const Error = error{
     DriverNotStarted,
     TimeOut,
     ChannelOpened,
@@ -911,102 +1036,102 @@ pub const MdFuncError = error{
     Unknown,
 };
 
-pub fn codeToError(code: i32) MdFuncError!void {
+pub inline fn codeToError(code: i32) Error!void {
     switch (code) {
         0 => return,
-        1 => return MdFuncError.DriverNotStarted,
-        2 => return MdFuncError.TimeOut,
-        66 => return MdFuncError.ChannelOpened,
-        68 => return MdFuncError.Path,
-        69 => return MdFuncError.UnsupportedFunctionExecution,
-        70 => return MdFuncError.StationNumber,
-        71 => return MdFuncError.NoReceptionData,
-        77 => return MdFuncError.MemoryReservation,
-        85 => return MdFuncError.SendRecvChannelNumber,
-        100 => return MdFuncError.BoardHwResourceBusy,
-        101 => return MdFuncError.RoutingParameter,
-        102 => return MdFuncError.BoardDriverIfSend,
-        103 => return MdFuncError.BoardDriverIfReceive,
-        133 => return MdFuncError.Parameter,
-        4096...16383 => return MdFuncError.MelsecInternal,
-        16384...16431 => return MdFuncError.AccessTargetCpu,
-        16432 => return MdFuncError.InvalidDevice,
-        16433 => return MdFuncError.DeviceNumber,
-        16434...16511 => return MdFuncError.AccessTargetCpu,
-        16512 => return MdFuncError.RequestData,
-        16513...18943 => return MdFuncError.AccessTargetCpu,
-        18944...18945 => return MdFuncError.LinkRelated,
-        18946...19201 => return MdFuncError.AccessTargetCpu,
-        19202 => return MdFuncError.RequestInvalid,
-        19303...20479 => return MdFuncError.AccessTargetCpu,
-        -1 => return MdFuncError.InvalidPath,
-        -2 => return MdFuncError.StartDeviceNumber,
-        -3 => return MdFuncError.DeviceType,
-        -5 => return MdFuncError.Size,
-        -6 => return MdFuncError.NumberOfBlocks,
-        -8 => return MdFuncError.ChannelNumber,
-        -12 => return MdFuncError.BlockNumber,
-        -13 => return MdFuncError.WriteProtect,
-        -16 => return MdFuncError.NetworkNumberAndStationNumber,
-        -17 => return MdFuncError.AllStationAndGroupNumberSpecification,
-        -18 => return MdFuncError.RemoteCommandCode,
-        -19 => return MdFuncError.SendRecvChannelNumber,
-        -31 => return MdFuncError.DllLoad,
-        -32 => return MdFuncError.ResourceTimeOut,
-        -33 => return MdFuncError.IncorrectAccessTarget,
-        -36...-34 => return MdFuncError.RegistryAccess,
-        -37 => return MdFuncError.CommunicationInitializationSetting,
-        -42 => return MdFuncError.Close,
-        -43 => return MdFuncError.RomOperation,
-        -61 => return MdFuncError.NumberOfEvents,
-        -62 => return MdFuncError.EventNumber,
-        -63 => return MdFuncError.EventNumberDuplicateRegistration,
-        -64 => return MdFuncError.TimeoutTime,
-        -65 => return MdFuncError.EventWaitTimeOut,
-        -66 => return MdFuncError.EventInitialization,
-        -67 => return MdFuncError.NoEventSetting,
-        -69 => return MdFuncError.UnsupportedFunctionExecutionPackageDriver,
-        -70 => return MdFuncError.EventDuplicationOccurrence,
-        -71 => return MdFuncError.RemoteDeviceStationAccess,
-        -2173...-257 => return MdFuncError.MelsecnetHAndMelsecnet10NetworkSystem,
-        -2174 => return MdFuncError.TransientDataTargetStationNumber,
-        -4096...-2175 => return MdFuncError.MelsecnetHAndMelsecnet10NetworkSystem,
-        -7655...-4097 => return MdFuncError.CcLinkIeControllerNetworkSystem,
-        -7656 => return MdFuncError.TransientDataTargetStationNumber2,
-        -7671...-7657 => return MdFuncError.CcLinkIeControllerNetworkSystem,
-        -7672 => return MdFuncError.TransientDataTargetStationNumber2,
-        -8192...-7673 => return MdFuncError.CcLinkIeControllerNetworkSystem,
-        -11682...-8193 => return MdFuncError.CcLinkIeFieldNetworkSystem,
-        -11683 => return MdFuncError.TransientDataImproper,
-        -11716...-11684 => return MdFuncError.CcLinkIeFieldNetworkSystem,
-        -11717 => return MdFuncError.NetworkNumber,
-        -11745...-11718 => return MdFuncError.CcLinkIeFieldNetworkSystem,
-        -11746 => return MdFuncError.StationNumber2,
-        -12127...-11747 => return MdFuncError.CcLinkIeFieldNetworkSystem,
-        -12128 => return MdFuncError.TransientDataSendResponseWaitTimeOut,
-        -12288...-12129 => return MdFuncError.CcLinkIeFieldNetworkSystem,
-        -16384...-12289 => return MdFuncError.EthernetNetworkSystem,
-        -18559...-16385 => return MdFuncError.CcLinkSystem,
-        -18560 => return MdFuncError.ModuleModeSetting,
-        -18571...-18561 => return MdFuncError.CcLinkSystem,
-        -18572 => return MdFuncError.TransientUnsupported,
-        -20480...-18573 => return MdFuncError.CcLinkSystem,
-        -25056 => return MdFuncError.ProcessingCode,
-        -26334 => return MdFuncError.Reset,
-        -26336 => return MdFuncError.RoutingFunctionUnsupportedStation,
-        -27902 => return MdFuncError.EventWaitTimeOut,
-        -28138 => return MdFuncError.UnsupportedBlockDataAssurancePerStation,
-        -28139 => return MdFuncError.LinkRefresh,
-        -28140 => return MdFuncError.IncorrectModeSetting,
-        -28141 => return MdFuncError.SystemSleep,
-        -28142 => return MdFuncError.Mode,
-        -28144...-28143 => return MdFuncError.HardwareSelfDiagnosis,
-        -28150 => return MdFuncError.DataLinkDisconnectedDeviceAccess,
-        -28151 => return MdFuncError.AbnormalDataReception,
-        -28158 => return MdFuncError.DriverWdt,
-        -28622 => return MdFuncError.ChannelBusy,
-        -28634 => return MdFuncError.HardwareSelfDiagnosis2,
-        -28636 => return MdFuncError.HardwareSelfDiagnosis2,
-        else => return MdFuncError.Unknown,
+        1 => return Error.DriverNotStarted,
+        2 => return Error.TimeOut,
+        66 => return Error.ChannelOpened,
+        68 => return Error.Path,
+        69 => return Error.UnsupportedFunctionExecution,
+        70 => return Error.StationNumber,
+        71 => return Error.NoReceptionData,
+        77 => return Error.MemoryReservation,
+        85 => return Error.SendRecvChannelNumber,
+        100 => return Error.BoardHwResourceBusy,
+        101 => return Error.RoutingParameter,
+        102 => return Error.BoardDriverIfSend,
+        103 => return Error.BoardDriverIfReceive,
+        133 => return Error.Parameter,
+        4096...16383 => return Error.MelsecInternal,
+        16384...16431 => return Error.AccessTargetCpu,
+        16432 => return Error.InvalidDevice,
+        16433 => return Error.DeviceNumber,
+        16434...16511 => return Error.AccessTargetCpu,
+        16512 => return Error.RequestData,
+        16513...18943 => return Error.AccessTargetCpu,
+        18944...18945 => return Error.LinkRelated,
+        18946...19201 => return Error.AccessTargetCpu,
+        19202 => return Error.RequestInvalid,
+        19303...20479 => return Error.AccessTargetCpu,
+        -1 => return Error.InvalidPath,
+        -2 => return Error.StartDeviceNumber,
+        -3 => return Error.DeviceType,
+        -5 => return Error.Size,
+        -6 => return Error.NumberOfBlocks,
+        -8 => return Error.ChannelNumber,
+        -12 => return Error.BlockNumber,
+        -13 => return Error.WriteProtect,
+        -16 => return Error.NetworkNumberAndStationNumber,
+        -17 => return Error.AllStationAndGroupNumberSpecification,
+        -18 => return Error.RemoteCommandCode,
+        -19 => return Error.SendRecvChannelNumber,
+        -31 => return Error.DllLoad,
+        -32 => return Error.ResourceTimeOut,
+        -33 => return Error.IncorrectAccessTarget,
+        -36...-34 => return Error.RegistryAccess,
+        -37 => return Error.CommunicationInitializationSetting,
+        -42 => return Error.Close,
+        -43 => return Error.RomOperation,
+        -61 => return Error.NumberOfEvents,
+        -62 => return Error.EventNumber,
+        -63 => return Error.EventNumberDuplicateRegistration,
+        -64 => return Error.TimeoutTime,
+        -65 => return Error.EventWaitTimeOut,
+        -66 => return Error.EventInitialization,
+        -67 => return Error.NoEventSetting,
+        -69 => return Error.UnsupportedFunctionExecutionPackageDriver,
+        -70 => return Error.EventDuplicationOccurrence,
+        -71 => return Error.RemoteDeviceStationAccess,
+        -2173...-257 => return Error.MelsecnetHAndMelsecnet10NetworkSystem,
+        -2174 => return Error.TransientDataTargetStationNumber,
+        -4096...-2175 => return Error.MelsecnetHAndMelsecnet10NetworkSystem,
+        -7655...-4097 => return Error.CcLinkIeControllerNetworkSystem,
+        -7656 => return Error.TransientDataTargetStationNumber2,
+        -7671...-7657 => return Error.CcLinkIeControllerNetworkSystem,
+        -7672 => return Error.TransientDataTargetStationNumber2,
+        -8192...-7673 => return Error.CcLinkIeControllerNetworkSystem,
+        -11682...-8193 => return Error.CcLinkIeFieldNetworkSystem,
+        -11683 => return Error.TransientDataImproper,
+        -11716...-11684 => return Error.CcLinkIeFieldNetworkSystem,
+        -11717 => return Error.NetworkNumber,
+        -11745...-11718 => return Error.CcLinkIeFieldNetworkSystem,
+        -11746 => return Error.StationNumber2,
+        -12127...-11747 => return Error.CcLinkIeFieldNetworkSystem,
+        -12128 => return Error.TransientDataSendResponseWaitTimeOut,
+        -12288...-12129 => return Error.CcLinkIeFieldNetworkSystem,
+        -16384...-12289 => return Error.EthernetNetworkSystem,
+        -18559...-16385 => return Error.CcLinkSystem,
+        -18560 => return Error.ModuleModeSetting,
+        -18571...-18561 => return Error.CcLinkSystem,
+        -18572 => return Error.TransientUnsupported,
+        -20480...-18573 => return Error.CcLinkSystem,
+        -25056 => return Error.ProcessingCode,
+        -26334 => return Error.Reset,
+        -26336 => return Error.RoutingFunctionUnsupportedStation,
+        -27902 => return Error.EventWaitTimeOut,
+        -28138 => return Error.UnsupportedBlockDataAssurancePerStation,
+        -28139 => return Error.LinkRefresh,
+        -28140 => return Error.IncorrectModeSetting,
+        -28141 => return Error.SystemSleep,
+        -28142 => return Error.Mode,
+        -28144...-28143 => return Error.HardwareSelfDiagnosis,
+        -28150 => return Error.DataLinkDisconnectedDeviceAccess,
+        -28151 => return Error.AbnormalDataReception,
+        -28158 => return Error.DriverWdt,
+        -28622 => return Error.ChannelBusy,
+        -28634 => return Error.HardwareSelfDiagnosis2,
+        -28636 => return Error.HardwareSelfDiagnosis2,
+        else => return Error.Unknown,
     }
 }
