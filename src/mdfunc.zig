@@ -10,7 +10,7 @@ else
 
 /// Open a communication line by specifying a channel number of communication
 /// line.
-extern "MdFunc32" fn mdOpen(
+pub extern "MdFunc32" fn mdOpen(
     /// Channel number of communication line
     chan: i16,
     /// Dummy
@@ -20,7 +20,7 @@ extern "MdFunc32" fn mdOpen(
 ) callconv(WINAPI) i16;
 
 /// Close a communication line by specifying a communication line path.
-extern "MdFunc32" fn mdClose(
+pub extern "MdFunc32" fn mdClose(
     /// Path of channel
     path: i32,
 ) callconv(WINAPI) i16;
@@ -28,7 +28,7 @@ extern "MdFunc32" fn mdClose(
 /// Batch write data to the devices on the target station for the number of
 /// written data bytes from the start device number. / Send data to the
 /// specified channel number of the target station.
-extern "MdFunc32" fn mdSend(
+pub extern "MdFunc32" fn mdSend(
     /// Path of channel
     path: i32,
     /// Station number
@@ -46,7 +46,7 @@ extern "MdFunc32" fn mdSend(
 /// Batch read data from the devices on the target station for the number of
 /// read data bytes from the start device number. / Read data of the specified
 /// channel number from the data which are received by the own station.
-extern "MdFunc32" fn mdReceive(
+pub extern "MdFunc32" fn mdReceive(
     /// Path of channel
     path: i32,
     /// Station number
@@ -62,7 +62,7 @@ extern "MdFunc32" fn mdReceive(
 ) callconv(WINAPI) i16;
 
 /// Set the specified bit device on the target station (to ON).
-extern "MdFunc32" fn mdDevSet(
+pub extern "MdFunc32" fn mdDevSet(
     /// Path of channel
     path: i32,
     /// Station number
@@ -74,7 +74,7 @@ extern "MdFunc32" fn mdDevSet(
 ) callconv(WINAPI) i16;
 
 /// Reset the specified bit device on the target station (to OFF).
-extern "MdFunc32" fn mdDevRst(
+pub extern "MdFunc32" fn mdDevRst(
     /// Path of channel
     path: i32,
     /// Station number
@@ -87,7 +87,7 @@ extern "MdFunc32" fn mdDevRst(
 
 /// Write data to the devices on the target station specified with the
 /// randomly-specified devices.
-extern "MdFunc32" fn mdRandW(
+pub extern "MdFunc32" fn mdRandW(
     /// Path of channel
     path: i32,
     /// Station number
@@ -102,7 +102,7 @@ extern "MdFunc32" fn mdRandW(
 
 /// Read the device specified with the randomly-specified devices from the
 /// target station.
-extern "MdFunc32" fn mdRandR(
+pub extern "MdFunc32" fn mdRandR(
     /// Path of channel
     path: i32,
     /// Station number
@@ -116,7 +116,7 @@ extern "MdFunc32" fn mdRandR(
 ) callconv(WINAPI) i16;
 
 /// Remotely operate a CPU on the target station. (Remote RUN/STOP/PAUSE)
-extern "MdFunc32" fn mdControl(
+pub extern "MdFunc32" fn mdControl(
     /// Path of channel
     path: i32,
     /// Station number
@@ -126,7 +126,7 @@ extern "MdFunc32" fn mdControl(
 ) callconv(WINAPI) i16;
 
 /// Read a model name code of the CPU on the target station.
-extern "MdFunc32" fn mdTypeRead(
+pub extern "MdFunc32" fn mdTypeRead(
     /// Path of channel
     path: i32,
     /// Station number
@@ -136,7 +136,7 @@ extern "MdFunc32" fn mdTypeRead(
 ) callconv(WINAPI) i16;
 
 /// Read the LED information of the board.
-extern "MdFunc32" fn mdBdLedRead(
+pub extern "MdFunc32" fn mdBdLedRead(
     /// Path of channel
     path: i32,
     /// Read data
@@ -144,7 +144,7 @@ extern "MdFunc32" fn mdBdLedRead(
 ) callconv(WINAPI) i16;
 
 /// Read the mode in which the board is currently operating.
-extern "MdFunc32" fn mdBdModRead(
+pub extern "MdFunc32" fn mdBdModRead(
     /// Path of channel
     path: i32,
     /// Mode
@@ -152,7 +152,7 @@ extern "MdFunc32" fn mdBdModRead(
 ) callconv(WINAPI) i16;
 
 /// Change the modes of a board temporarily.
-extern "MdFunc32" fn mdBdModSet(
+pub extern "MdFunc32" fn mdBdModSet(
     /// Path of channel
     path: i32,
     /// Mode
@@ -160,14 +160,14 @@ extern "MdFunc32" fn mdBdModSet(
 ) callconv(WINAPI) i16;
 
 /// Reset a board.
-extern "MdFunc32" fn mdBdRst(
+pub extern "MdFunc32" fn mdBdRst(
     /// Path of channel
     path: i32,
 ) callconv(WINAPI) i16;
 
 /// Read a board switch status (such as station number setting, board number
 /// setting, board identification, and I/O address setting information).
-extern "MdFunc32" fn mdBdSwRead(
+pub extern "MdFunc32" fn mdBdSwRead(
     /// Path of channel
     path: i32,
     /// Read data
@@ -175,7 +175,7 @@ extern "MdFunc32" fn mdBdSwRead(
 ) callconv(WINAPI) i16;
 
 /// Read the version information of the board.
-extern "MdFunc32" fn mdBdVerRead(
+pub extern "MdFunc32" fn mdBdVerRead(
     /// Path of channel
     path: i32,
     /// Read data
@@ -184,13 +184,13 @@ extern "MdFunc32" fn mdBdVerRead(
 
 /// Refresh a programmable controller device address table which is the
 /// internal data of the MELSEC data link library.
-extern "MdFunc32" fn mdInit(
+pub extern "MdFunc32" fn mdInit(
     /// Path of channel
     path: i32,
 ) callconv(WINAPI) i16;
 
 /// Wait an occurrence of event until the time out.
-extern "MdFunc32" fn mdWaitBdEvent(
+pub extern "MdFunc32" fn mdWaitBdEvent(
     /// Path of channel
     path: i32,
     /// Waiting event number
@@ -206,7 +206,7 @@ extern "MdFunc32" fn mdWaitBdEvent(
 /// Batch write data to the devices on the target station for the number of
 /// written data bytes from the start device number. / Send data to the
 /// specified channel number of the target station.
-extern "MdFunc32" fn mdSendEx(
+pub extern "MdFunc32" fn mdSendEx(
     /// Path of channel
     path: i32,
     /// Network number
@@ -226,7 +226,7 @@ extern "MdFunc32" fn mdSendEx(
 /// Batch read data from the devices on the target station for the number of
 /// read data bytes from the start device number. / Read data of the specified
 /// channel number from the data which are received by the own station.
-extern "MdFunc32" fn mdReceiveEx(
+pub extern "MdFunc32" fn mdReceiveEx(
     /// Path of channel
     path: i32,
     /// Network number
@@ -244,7 +244,7 @@ extern "MdFunc32" fn mdReceiveEx(
 ) callconv(WINAPI) i32;
 
 /// Set the specified bit device on the target station (to ON).
-extern "MdFunc32" fn mdDevSetEx(
+pub extern "MdFunc32" fn mdDevSetEx(
     /// Path of channel
     path: i32,
     /// Network number
@@ -258,7 +258,7 @@ extern "MdFunc32" fn mdDevSetEx(
 ) callconv(WINAPI) i32;
 
 /// Reset the specified bit device on the target station (to OFF).
-extern "MdFunc32" fn mdDevRstEx(
+pub extern "MdFunc32" fn mdDevRstEx(
     /// Path of channel
     path: i32,
     /// Network number
@@ -273,7 +273,7 @@ extern "MdFunc32" fn mdDevRstEx(
 
 /// Write data to the devices on the target station specified with the
 /// randomly-specified devices.
-extern "MdFunc32" fn mdRandWEx(
+pub extern "MdFunc32" fn mdRandWEx(
     /// Path of channel
     path: i32,
     /// Network number
@@ -290,7 +290,7 @@ extern "MdFunc32" fn mdRandWEx(
 
 /// Read the device specified with the randomly-specified devices from the
 /// target station.
-extern "MdFunc32" fn mdRandREx(
+pub extern "MdFunc32" fn mdRandREx(
     /// Path of channel
     path: i32,
     /// Network number
@@ -307,7 +307,7 @@ extern "MdFunc32" fn mdRandREx(
 
 /// Write data to the buffer memory of a target station (remote device station
 /// of CC-Link IE Field Network).
-extern "MdFunc32" fn mdRemBufWriteEx(
+pub extern "MdFunc32" fn mdRemBufWriteEx(
     /// Path of channel
     path: i32,
     /// Network number
@@ -324,7 +324,7 @@ extern "MdFunc32" fn mdRemBufWriteEx(
 
 /// Read data from the buffer memory of a target station (remote device station
 /// of CC-Link IE Field Network).
-extern "MdFunc32" fn mdRemBufReadEx(
+pub extern "MdFunc32" fn mdRemBufReadEx(
     /// Path of channel
     path: i32,
     /// Network number
