@@ -8,10 +8,7 @@ pub fn build(b: *std.Build) void {
         .root_source_file = .{ .path = "src/mdfunc.zig" },
         .target = target,
         .optimize = optimize,
-        .link_libc = true,
-        .pic = true,
     });
-    mod.addIncludePath(.{ .path = "include" });
 
     const mdfunc_lib_path = b.option(
         []const u8,
