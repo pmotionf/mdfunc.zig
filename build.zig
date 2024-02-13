@@ -15,15 +15,13 @@ pub fn build(b: *std.Build) void {
 
     const mdfunc_lib_path = b.option(
         []const u8,
-        "mdfunc_lib_path",
+        "mdfunc",
         "Specify the path to the MELSEC static library artifact.",
-    );
-    const mdfunc_dir_path = std.fs.path.dirname(
-        mdfunc_lib_path orelse "lib/MdFunc32.lib",
-    ) orelse "lib";
-    const mdfunc_lib_name = std.fs.path.stem(
-        mdfunc_lib_path orelse "lib/MdFunc32.lib",
-    );
+    ) orelse b.pathFromRoot("lib/MdFunc32.lib");
+
+    const mdfunc_dir_path = std.fs.path.dirname(mdfunc_lib_path) orelse
+        b.build_root.path.?;
+    const mdfunc_lib_name = std.fs.path.stem(mdfunc_lib_path);
 
     mod.addLibraryPath(.{ .path = mdfunc_dir_path });
     mod.linkSystemLibrary(mdfunc_lib_name, .{
