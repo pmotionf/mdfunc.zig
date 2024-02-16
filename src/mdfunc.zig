@@ -344,7 +344,7 @@ pub fn devRstEx(
     /// Station number
     stno: i32,
     /// Device type
-    devtyp: i32,
+    devtyp: Device,
     /// Specified device number
     devno: i32,
 ) Error!void {
