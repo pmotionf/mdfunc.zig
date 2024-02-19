@@ -29,16 +29,16 @@ pub fn send(
     /// Start device number / Channel number
     devno: i16,
     /// Written data / Send data
-    data: []i16,
+    data: []const u8,
 ) Error!i16 {
-    var local_size: i16 = @truncate(data.len * 2);
+    var local_size: i16 = std.math.lossyCast(i16, data.len);
     try codeToError(mdSend(
         path,
         stno,
         @intFromEnum(devtyp),
         devno,
         &local_size,
-        data.ptr,
+        @constCast(@ptrCast(@alignCast(data.ptr))),
     ));
     return local_size;
 }
@@ -56,16 +56,16 @@ pub fn receive(
     /// Start device number / Channel number
     devno: i16,
     /// Read data / Receive data with send source information
-    data: []i16,
+    data: []u8,
 ) Error!i16 {
-    var local_size: i16 = @truncate(data.len * 2);
+    var local_size: i16 = std.math.lossyCast(i16, data.len);
     try codeToError(mdReceive(
         path,
         stno,
         @intFromEnum(devtyp),
         devno,
         &local_size,
-        data.ptr,
+        @ptrCast(data.ptr),
     ));
     return local_size;
 }
@@ -106,9 +106,9 @@ pub fn randW(
     /// Station number
     stno: i16,
     /// Randomly-specified device
-    dev: []i16,
+    dev: []const i16,
     /// Written data
-    buf: []i16,
+    buf: []const i16,
 ) Error!void {
     try codeToError(mdRandW(path, stno, dev.ptr, buf.ptr, 0));
 }
@@ -121,11 +121,14 @@ pub fn randR(
     /// Station number
     stno: i16,
     /// Randomly-specified device
-    dev: []i16,
+    dev: []const i16,
     /// Read data
     buf: []i16,
 ) Error!void {
-    const read_size: i16 = @truncate(buf.len * 2);
+    const read_size: i16 = if (buf.len > std.math.maxInt(i16) / 2)
+        std.math.maxInt(i16)
+    else
+        @intCast(buf.len * 2);
     try codeToError(mdRandR(path, stno, dev.ptr, buf.ptr, read_size));
 }
 
@@ -235,8 +238,8 @@ pub fn init(
 pub fn waitBdEvent(
     /// Path of channel
     path: i32,
-    /// Waiting event number
-    eventno: []i16,
+    /// Waiting event number, max length of 65
+    eventno: []const i16,
     /// Timeout value
     timeout: i32,
     /// Event detail information
@@ -268,9 +271,9 @@ pub fn sendEx(
     /// Start device number / Channel number
     devno: i32,
     /// Written data / Send data
-    data: []i16,
+    data: []const u8,
 ) Error!i32 {
-    var local_size: i32 = @truncate(data.len * 2);
+    var local_size: i32 = std.math.lossyCast(i32, data.len);
     try codeToError(mdSendEx(
         path,
         netno,
@@ -278,7 +281,7 @@ pub fn sendEx(
         @intFromEnum(devtyp),
         devno,
         &local_size,
-        data.ptr,
+        @constCast(@ptrCast(data.ptr)),
     ));
     return local_size;
 }
@@ -298,9 +301,9 @@ pub fn receiveEx(
     /// Start device number / Channel number
     devno: i32,
     /// Read data / Receive data
-    data: []i16,
+    data: []u8,
 ) Error!i32 {
-    var local_size: i32 = @truncate(data.len * 2);
+    var local_size: i32 = std.math.lossyCast(i32, data.len);
     try codeToError(mdReceiveEx(
         path,
         netno,
@@ -308,7 +311,7 @@ pub fn receiveEx(
         @intFromEnum(devtyp),
         devno,
         &local_size,
-        data.ptr,
+        @ptrCast(data.ptr),
     ));
     return local_size;
 }
@@ -367,9 +370,9 @@ pub fn randWEx(
     /// Station number
     stno: i32,
     /// Randomly-specified device
-    dev: []i32,
+    dev: []const i32,
     /// Written data
-    buf: []i16,
+    buf: []const i16,
 ) Error!void {
     try codeToError(mdRandWEx(path, netno, stno, dev.ptr, buf.ptr, 0));
 }
@@ -384,11 +387,14 @@ pub fn randREx(
     /// Station number
     stno: i32,
     /// Randomly-specified device
-    dev: []i32,
+    dev: []const i32,
     /// Read data
     buf: []i16,
 ) Error!void {
-    const read_buf_bytes: i32 = @truncate(buf.len * 2);
+    const read_buf_bytes: i32 = if (buf.len > std.math.maxInt(i32))
+        std.math.maxInt(i32)
+    else
+        @intCast(buf.len * 2);
     try codeToError(mdRandREx(
         path,
         netno,
@@ -411,9 +417,12 @@ pub fn remBufWriteEx(
     /// Offset
     offset: i32,
     /// Written data
-    data: []i16,
+    data: []const i16,
 ) Error!i32 {
-    const data_bytes: i32 = @truncate(data.len * 2);
+    const data_bytes: i32 = if (data.len > std.math.maxInt(i32))
+        std.math.maxInt(i32)
+    else
+        @intCast(data.len * 2);
     try codeToError(mdRemBufWriteEx(
         path,
         netno,
@@ -438,7 +447,10 @@ pub fn remBufReadEx(
     /// Read data
     data: []i16,
 ) Error!void {
-    const data_bytes: i32 = @truncate(data.len * 2);
+    const data_bytes: i32 = if (data.len > std.math.maxInt(i32))
+        std.math.maxInt(i32)
+    else
+        @intCast(data.len * 2);
     try codeToError(mdRemBufReadEx(
         path,
         netno,
