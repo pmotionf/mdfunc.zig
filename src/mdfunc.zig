@@ -65,7 +65,7 @@ pub fn receive(
         @intFromEnum(devtyp),
         devno,
         &local_size,
-        @ptrCast(data.ptr),
+        @ptrCast(@alignCast(data.ptr)),
     ));
     return local_size;
 }
@@ -281,7 +281,7 @@ pub fn sendEx(
         @intFromEnum(devtyp),
         devno,
         &local_size,
-        @constCast(@ptrCast(data.ptr)),
+        @constCast(@ptrCast(@alignCast(data.ptr))),
     ));
     return local_size;
 }
@@ -311,7 +311,7 @@ pub fn receiveEx(
         @intFromEnum(devtyp),
         devno,
         &local_size,
-        @ptrCast(data.ptr),
+        @ptrCast(@alignCast(data.ptr)),
     ));
     return local_size;
 }
