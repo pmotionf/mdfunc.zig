@@ -1055,6 +1055,7 @@ pub const Error = error{
     @"-28622: Channel busy (dedicated instruction) error",
     @"-28634: Hardware self-diagnosis error",
     @"-28636: Hardware self-diagnosis error",
+    @"Unknown MELSEC Data Link Library error",
 };
 
 pub inline fn codeToError(code: i32) Error!void {
@@ -1180,6 +1181,6 @@ pub inline fn codeToError(code: i32) Error!void {
         -28622 => return Error.@"-28622: Channel busy (dedicated instruction) error",
         -28634 => return Error.@"-28634: Hardware self-diagnosis error",
         -28636 => return Error.@"-28636: Hardware self-diagnosis error",
-        else => return Error.Unknown,
+        else => return Error.@"Unknown MELSEC Data Link Library error",
     }
 }
