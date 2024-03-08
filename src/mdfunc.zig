@@ -1098,7 +1098,7 @@ pub inline fn codeToError(code: i32) Error!void {
         18944 => return Error.@"18944: Link-related error",
         18945 => return Error.@"18945: Link-related error",
         18946...19201 => return Error.@"16384..20479: Error detected by the access target CPU",
-        19202 => return Error.@"19202: The request is not for a CPU module",
+        19202 => return Error.@"19202: The request is not for a CPU module.",
         19203...20479 => return Error.@"16384..20479: Error detected by the access target CPU",
         28416...28671 => return Error.@"28416..28671: Error detected by the redundant function module",
         -1 => return Error.@"-1: Path error",
