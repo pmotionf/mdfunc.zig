@@ -23,6 +23,6 @@ pub fn build(b: *std.Build) void {
     mod.addLibraryPath(.{ .path = mdfunc_dir_path });
     mod.linkSystemLibrary(mdfunc_lib_name, .{
         .needed = true,
-        .preferred_link_mode = .Static,
+        .preferred_link_mode = .static,
     });
 }
