@@ -1,12 +1,11 @@
 .{
     .name = "mdfunc",
     .version = "0.0.4",
-    .minimum_zig_version = "0.12.0-dev.3269+0c6146677",
+    .minimum_zig_version = "0.13.0-dev.79+6bc0cef60",
     .paths = .{
         "build.zig",
         "build.zig.zon",
         "src",
         "LICENSE-MIT",
-        "README.md",
     },
 }
