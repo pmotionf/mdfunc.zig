@@ -1,18 +1,25 @@
 const std = @import("std");
 const builtin = @import("builtin");
-const native_arch = builtin.cpu.arch;
+const options = @import("options");
+const target_arch = builtin.target.cpu.arch;
 
 /// Open a communication line by specifying a channel number of communication
 /// line.
 pub fn open(chan: Channel) Error!i32 {
-    var path: i32 = undefined;
-    try codeToError(mdOpen(@intFromEnum(chan), -1, &path));
-    return path;
+    if (options.mock) {
+        return @intFromEnum(chan);
+    } else {
+        var path: i32 = undefined;
+        try codeToError(mdOpen(@intFromEnum(chan), -1, &path));
+        return path;
+    }
 }
 
 /// Close a communication line by specifying a communication line path.
 pub fn close(path: i32) Error!void {
-    try codeToError(mdClose(path));
+    if (!options.mock) {
+        try codeToError(mdClose(path));
+    }
 }
 
 /// Close a communication line by specifying a communication line path.
@@ -32,14 +39,16 @@ pub fn send(
     data: []const u8,
 ) Error!i16 {
     var local_size: i16 = std.math.lossyCast(i16, data.len);
-    try codeToError(mdSend(
-        path,
-        stno,
-        @intFromEnum(devtyp),
-        devno,
-        &local_size,
-        @constCast(@ptrCast(@alignCast(data.ptr))),
-    ));
+    if (!options.mock) {
+        try codeToError(mdSend(
+            path,
+            stno,
+            @intFromEnum(devtyp),
+            devno,
+            &local_size,
+            @constCast(@ptrCast(@alignCast(data.ptr))),
+        ));
+    }
     return local_size;
 }
 
@@ -59,14 +68,16 @@ pub fn receive(
     data: []u8,
 ) Error!i16 {
     var local_size: i16 = std.math.lossyCast(i16, data.len);
-    try codeToError(mdReceive(
-        path,
-        stno,
-        @intFromEnum(devtyp),
-        devno,
-        &local_size,
-        @ptrCast(@alignCast(data.ptr)),
-    ));
+    if (!options.mock) {
+        try codeToError(mdReceive(
+            path,
+            stno,
+            @intFromEnum(devtyp),
+            devno,
+            &local_size,
+            @ptrCast(@alignCast(data.ptr)),
+        ));
+    }
     return local_size;
 }
 
@@ -81,7 +92,9 @@ pub fn devSet(
     /// Specified device number
     devno: i16,
 ) Error!void {
-    try codeToError(mdDevSet(path, stno, @intFromEnum(devtyp), devno));
+    if (!options.mock) {
+        try codeToError(mdDevSet(path, stno, @intFromEnum(devtyp), devno));
+    }
 }
 
 /// Reset the specified bit device on the target station (to OFF).
@@ -95,7 +108,9 @@ pub fn devRst(
     /// Specified device number
     devno: i16,
 ) Error!void {
-    try codeToError(mdDevRst(path, stno, @intFromEnum(devtyp), devno));
+    if (!options.mock) {
+        try codeToError(mdDevRst(path, stno, @intFromEnum(devtyp), devno));
+    }
 }
 
 /// Write data to the devices on the target station specified with the
@@ -110,7 +125,9 @@ pub fn randW(
     /// Written data
     buf: []const i16,
 ) Error!void {
-    try codeToError(mdRandW(path, stno, dev.ptr, buf.ptr, 0));
+    if (!options.mock) {
+        try codeToError(mdRandW(path, stno, dev.ptr, buf.ptr, 0));
+    }
 }
 
 /// Read the device specified with the randomly-specified devices from the
@@ -125,11 +142,13 @@ pub fn randR(
     /// Read data
     buf: []i16,
 ) Error!void {
-    const read_size: i16 = if (buf.len > std.math.maxInt(i16) / 2)
-        std.math.maxInt(i16)
-    else
-        @intCast(buf.len * 2);
-    try codeToError(mdRandR(path, stno, dev.ptr, buf.ptr, read_size));
+    if (!options.mock) {
+        const read_size: i16 = if (buf.len > std.math.maxInt(i16) / 2)
+            std.math.maxInt(i16)
+        else
+            @intCast(buf.len * 2);
+        try codeToError(mdRandR(path, stno, dev.ptr, buf.ptr, read_size));
+    }
 }
 
 /// Remotely operate a CPU on the target station. (Remote RUN/STOP/PAUSE)
@@ -141,7 +160,9 @@ pub fn control(
     /// Command code
     buf: CommandCode,
 ) Error!void {
-    try codeToError(mdControl(path, stno, @intFromEnum(buf)));
+    if (!options.mock) {
+        try codeToError(mdControl(path, stno, @intFromEnum(buf)));
+    }
 }
 
 pub const CommandCode = enum(i16) {
@@ -160,9 +181,13 @@ pub fn typeRead(
     /// Station number
     stno: i16,
 ) Error!i16 {
-    var model_name_code: i16 = undefined;
-    try codeToError(mdTypeRead(path, stno, &model_name_code));
-    return model_name_code;
+    if (options.mock) {
+        return 0;
+    } else {
+        var model_name_code: i16 = undefined;
+        try codeToError(mdTypeRead(path, stno, &model_name_code));
+        return model_name_code;
+    }
 }
 
 /// Read the LED information of the board.
@@ -173,7 +198,9 @@ pub fn bdLedRead(
     /// otherwise must be of length 2.
     buf: []i16,
 ) Error!void {
-    try codeToError(mdBdLedRead(path, buf.ptr));
+    if (!options.mock) {
+        try codeToError(mdBdLedRead(path, buf.ptr));
+    }
 }
 
 /// Read the mode in which the board is currently operating.
@@ -181,9 +208,13 @@ pub fn bdModRead(
     /// Path of channel
     path: i32,
 ) Error!i16 {
-    var mode: i16 = undefined;
-    try codeToError(mdBdModRead(path, &mode));
-    return mode;
+    if (options.mock) {
+        return 0;
+    } else {
+        var mode: i16 = undefined;
+        try codeToError(mdBdModRead(path, &mode));
+        return mode;
+    }
 }
 
 /// Change the modes of a board temporarily.
@@ -193,7 +224,9 @@ pub fn bdModSet(
     /// Mode
     mode: i16,
 ) Error!void {
-    try codeToError(mdBdModSet(path, mode));
+    if (!options.mock) {
+        try codeToError(mdBdModSet(path, mode));
+    }
 }
 
 /// Reset a board.
@@ -201,7 +234,9 @@ pub fn bdRst(
     /// Path of channel
     path: i32,
 ) Error!void {
-    try codeToError(mdBdRst(path));
+    if (!options.mock) {
+        try codeToError(mdBdRst(path));
+    }
 }
 
 /// Read a board switch status (such as station number setting, board number
@@ -212,7 +247,9 @@ pub fn bdSwRead(
     /// Read data
     buf: *[6]i16,
 ) Error!void {
-    try codeToError(mdBdSwRead(path, buf));
+    if (!options.mock) {
+        try codeToError(mdBdSwRead(path, buf));
+    }
 }
 
 /// Read the version information of the board.
@@ -222,7 +259,9 @@ pub fn bdVerRead(
     /// Read data
     buf: *[32]i16,
 ) Error!void {
-    try codeToError(mdBdVerRead(path, buf));
+    if (!options.mock) {
+        try codeToError(mdBdVerRead(path, buf));
+    }
 }
 
 /// Refresh a programmable controller device address table which is the
@@ -231,7 +270,9 @@ pub fn init(
     /// Path of channel
     path: i32,
 ) Error!void {
-    try codeToError(mdInit(path));
+    if (!options.mock) {
+        try codeToError(mdInit(path));
+    }
 }
 
 /// Wait an occurrence of event until the time out.
@@ -245,15 +286,19 @@ pub fn waitBdEvent(
     /// Event detail information
     details: *[4]i16,
 ) Error!i16 {
-    var driven_event_number: i16 = undefined;
-    try codeToError(mdWaitBdEvent(
-        path,
-        eventno.ptr,
-        timeout,
-        &driven_event_number,
-        details,
-    ));
-    return driven_event_number;
+    if (options.mock) {
+        return 0;
+    } else {
+        var driven_event_number: i16 = undefined;
+        try codeToError(mdWaitBdEvent(
+            path,
+            eventno.ptr,
+            timeout,
+            &driven_event_number,
+            details,
+        ));
+        return driven_event_number;
+    }
 }
 
 /// Batch write data to the devices on the target station for the number of
@@ -274,15 +319,17 @@ pub fn sendEx(
     data: []const u8,
 ) Error!i32 {
     var local_size: i32 = std.math.lossyCast(i32, data.len);
-    try codeToError(mdSendEx(
-        path,
-        netno,
-        stno,
-        @intFromEnum(devtyp),
-        devno,
-        &local_size,
-        @constCast(@ptrCast(@alignCast(data.ptr))),
-    ));
+    if (!options.mock) {
+        try codeToError(mdSendEx(
+            path,
+            netno,
+            stno,
+            @intFromEnum(devtyp),
+            devno,
+            &local_size,
+            @constCast(@ptrCast(@alignCast(data.ptr))),
+        ));
+    }
     return local_size;
 }
 
@@ -304,15 +351,17 @@ pub fn receiveEx(
     data: []u8,
 ) Error!i32 {
     var local_size: i32 = std.math.lossyCast(i32, data.len);
-    try codeToError(mdReceiveEx(
-        path,
-        netno,
-        stno,
-        @intFromEnum(devtyp),
-        devno,
-        &local_size,
-        @ptrCast(@alignCast(data.ptr)),
-    ));
+    if (!options.mock) {
+        try codeToError(mdReceiveEx(
+            path,
+            netno,
+            stno,
+            @intFromEnum(devtyp),
+            devno,
+            &local_size,
+            @ptrCast(@alignCast(data.ptr)),
+        ));
+    }
     return local_size;
 }
 
@@ -329,13 +378,15 @@ pub fn devSetEx(
     /// Specified device number
     devno: i32,
 ) Error!void {
-    try codeToError(mdDevSetEx(
-        path,
-        netno,
-        stno,
-        @intFromEnum(devtyp),
-        devno,
-    ));
+    if (!options.mock) {
+        try codeToError(mdDevSetEx(
+            path,
+            netno,
+            stno,
+            @intFromEnum(devtyp),
+            devno,
+        ));
+    }
 }
 
 /// Reset the specified bit device on the target station (to OFF).
@@ -351,13 +402,15 @@ pub fn devRstEx(
     /// Specified device number
     devno: i32,
 ) Error!void {
-    try codeToError(mdDevRstEx(
-        path,
-        netno,
-        stno,
-        @intFromEnum(devtyp),
-        devno,
-    ));
+    if (!options.mock) {
+        try codeToError(mdDevRstEx(
+            path,
+            netno,
+            stno,
+            @intFromEnum(devtyp),
+            devno,
+        ));
+    }
 }
 
 /// Write data to the devices on the target station specified with the
@@ -374,7 +427,9 @@ pub fn randWEx(
     /// Written data
     buf: []const i16,
 ) Error!void {
-    try codeToError(mdRandWEx(path, netno, stno, dev.ptr, buf.ptr, 0));
+    if (!options.mock) {
+        try codeToError(mdRandWEx(path, netno, stno, dev.ptr, buf.ptr, 0));
+    }
 }
 
 /// Read the device specified with the randomly-specified devices from the
@@ -391,18 +446,17 @@ pub fn randREx(
     /// Read data
     buf: []i16,
 ) Error!void {
-    const read_buf_bytes: i32 = if (buf.len > std.math.maxInt(i32))
-        std.math.maxInt(i32)
-    else
-        @intCast(buf.len * 2);
-    try codeToError(mdRandREx(
-        path,
-        netno,
-        stno,
-        dev.ptr,
-        buf.ptr,
-        read_buf_bytes,
-    ));
+    if (!options.mock) {
+        const read_buf_bytes = std.math.lossyCast(i32, buf.len * 2);
+        try codeToError(mdRandREx(
+            path,
+            netno,
+            stno,
+            dev.ptr,
+            buf.ptr,
+            read_buf_bytes,
+        ));
+    }
 }
 
 /// Write data to the buffer memory of a target station (remote device station
@@ -419,18 +473,17 @@ pub fn remBufWriteEx(
     /// Written data
     data: []const i16,
 ) Error!i32 {
-    const data_bytes: i32 = if (data.len > std.math.maxInt(i32))
-        std.math.maxInt(i32)
-    else
-        @intCast(data.len * 2);
-    try codeToError(mdRemBufWriteEx(
-        path,
-        netno,
-        stno,
-        offset,
-        &data_bytes,
-        data.ptr,
-    ));
+    if (!options.mock) {
+        const data_bytes = std.math.lossyCast(i32, data.len * 2);
+        try codeToError(mdRemBufWriteEx(
+            path,
+            netno,
+            stno,
+            offset,
+            &data_bytes,
+            data.ptr,
+        ));
+    }
 }
 
 /// Read data from the buffer memory of a target station (remote device station
@@ -447,18 +500,17 @@ pub fn remBufReadEx(
     /// Read data
     data: []i16,
 ) Error!void {
-    const data_bytes: i32 = if (data.len > std.math.maxInt(i32))
-        std.math.maxInt(i32)
-    else
-        @intCast(data.len * 2);
-    try codeToError(mdRemBufReadEx(
-        path,
-        netno,
-        stno,
-        offset,
-        &data_bytes,
-        data.ptr,
-    ));
+    if (!options.mock) {
+        const data_bytes = std.math.lossyCast(i32, data.len * 2);
+        try codeToError(mdRemBufReadEx(
+            path,
+            netno,
+            stno,
+            offset,
+            &data_bytes,
+            data.ptr,
+        ));
+    }
 }
 
 pub const Channel = enum(i16) {
@@ -480,8 +532,7 @@ pub const Channel = enum(i16) {
     @"CC-Link IE Field Network (Channel No. 184)" = 184,
 };
 
-// TODO: Ensure this is actually based off of target arch, not native.
-const WINAPI: std.builtin.CallingConvention = if (native_arch == .x86)
+const WINAPI: std.builtin.CallingConvention = if (target_arch == .x86)
     .Stdcall
 else
     .C;
