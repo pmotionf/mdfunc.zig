@@ -1,24 +1,24 @@
 const std = @import("std");
-const builtin = @import("builtin");
 const options = @import("options");
-const target_arch = builtin.target.cpu.arch;
+
+pub const c = if (options.mock) {} else @import("c.zig");
 
 /// Open a communication line by specifying a channel number of communication
 /// line.
 pub fn open(chan: Channel) Error!i32 {
-    if (options.mock) {
+    if (comptime options.mock) {
         return @intFromEnum(chan);
     } else {
         var path: i32 = undefined;
-        try codeToError(mdOpen(@intFromEnum(chan), -1, &path));
+        try codeToError(c.mdOpen(@intFromEnum(chan), -1, &path));
         return path;
     }
 }
 
 /// Close a communication line by specifying a communication line path.
 pub fn close(path: i32) Error!void {
-    if (!options.mock) {
-        try codeToError(mdClose(path));
+    if (comptime !options.mock) {
+        try codeToError(c.mdClose(path));
     }
 }
 
@@ -39,8 +39,8 @@ pub fn send(
     data: []const u8,
 ) Error!i16 {
     var local_size: i16 = std.math.lossyCast(i16, data.len);
-    if (!options.mock) {
-        try codeToError(mdSend(
+    if (comptime !options.mock) {
+        try codeToError(c.mdSend(
             path,
             stno,
             @intFromEnum(devtyp),
@@ -68,8 +68,8 @@ pub fn receive(
     data: []u8,
 ) Error!i16 {
     var local_size: i16 = std.math.lossyCast(i16, data.len);
-    if (!options.mock) {
-        try codeToError(mdReceive(
+    if (comptime !options.mock) {
+        try codeToError(c.mdReceive(
             path,
             stno,
             @intFromEnum(devtyp),
@@ -92,8 +92,8 @@ pub fn devSet(
     /// Specified device number
     devno: i16,
 ) Error!void {
-    if (!options.mock) {
-        try codeToError(mdDevSet(path, stno, @intFromEnum(devtyp), devno));
+    if (comptime !options.mock) {
+        try codeToError(c.mdDevSet(path, stno, @intFromEnum(devtyp), devno));
     }
 }
 
@@ -108,8 +108,8 @@ pub fn devRst(
     /// Specified device number
     devno: i16,
 ) Error!void {
-    if (!options.mock) {
-        try codeToError(mdDevRst(path, stno, @intFromEnum(devtyp), devno));
+    if (comptime !options.mock) {
+        try codeToError(c.mdDevRst(path, stno, @intFromEnum(devtyp), devno));
     }
 }
 
@@ -125,8 +125,8 @@ pub fn randW(
     /// Written data
     buf: []const i16,
 ) Error!void {
-    if (!options.mock) {
-        try codeToError(mdRandW(path, stno, dev.ptr, buf.ptr, 0));
+    if (comptime !options.mock) {
+        try codeToError(c.mdRandW(path, stno, dev.ptr, buf.ptr, 0));
     }
 }
 
@@ -142,12 +142,12 @@ pub fn randR(
     /// Read data
     buf: []i16,
 ) Error!void {
-    if (!options.mock) {
+    if (comptime !options.mock) {
         const read_size: i16 = if (buf.len > std.math.maxInt(i16) / 2)
             std.math.maxInt(i16)
         else
             @intCast(buf.len * 2);
-        try codeToError(mdRandR(path, stno, dev.ptr, buf.ptr, read_size));
+        try codeToError(c.mdRandR(path, stno, dev.ptr, buf.ptr, read_size));
     }
 }
 
@@ -160,8 +160,8 @@ pub fn control(
     /// Command code
     buf: CommandCode,
 ) Error!void {
-    if (!options.mock) {
-        try codeToError(mdControl(path, stno, @intFromEnum(buf)));
+    if (comptime !options.mock) {
+        try codeToError(c.mdControl(path, stno, @intFromEnum(buf)));
     }
 }
 
@@ -181,11 +181,11 @@ pub fn typeRead(
     /// Station number
     stno: i16,
 ) Error!i16 {
-    if (options.mock) {
+    if (comptime options.mock) {
         return 0;
     } else {
         var model_name_code: i16 = undefined;
-        try codeToError(mdTypeRead(path, stno, &model_name_code));
+        try codeToError(c.mdTypeRead(path, stno, &model_name_code));
         return model_name_code;
     }
 }
@@ -198,8 +198,8 @@ pub fn bdLedRead(
     /// otherwise must be of length 2.
     buf: []i16,
 ) Error!void {
-    if (!options.mock) {
-        try codeToError(mdBdLedRead(path, buf.ptr));
+    if (comptime !options.mock) {
+        try codeToError(c.mdBdLedRead(path, buf.ptr));
     }
 }
 
@@ -208,11 +208,11 @@ pub fn bdModRead(
     /// Path of channel
     path: i32,
 ) Error!i16 {
-    if (options.mock) {
+    if (comptime options.mock) {
         return 0;
     } else {
         var mode: i16 = undefined;
-        try codeToError(mdBdModRead(path, &mode));
+        try codeToError(c.mdBdModRead(path, &mode));
         return mode;
     }
 }
@@ -224,8 +224,8 @@ pub fn bdModSet(
     /// Mode
     mode: i16,
 ) Error!void {
-    if (!options.mock) {
-        try codeToError(mdBdModSet(path, mode));
+    if (comptime !options.mock) {
+        try codeToError(c.mdBdModSet(path, mode));
     }
 }
 
@@ -234,8 +234,8 @@ pub fn bdRst(
     /// Path of channel
     path: i32,
 ) Error!void {
-    if (!options.mock) {
-        try codeToError(mdBdRst(path));
+    if (comptime !options.mock) {
+        try codeToError(c.mdBdRst(path));
     }
 }
 
@@ -247,8 +247,8 @@ pub fn bdSwRead(
     /// Read data
     buf: *[6]i16,
 ) Error!void {
-    if (!options.mock) {
-        try codeToError(mdBdSwRead(path, buf));
+    if (comptime !options.mock) {
+        try codeToError(c.mdBdSwRead(path, buf));
     }
 }
 
@@ -259,8 +259,8 @@ pub fn bdVerRead(
     /// Read data
     buf: *[32]i16,
 ) Error!void {
-    if (!options.mock) {
-        try codeToError(mdBdVerRead(path, buf));
+    if (comptime !options.mock) {
+        try codeToError(c.mdBdVerRead(path, buf));
     }
 }
 
@@ -270,8 +270,8 @@ pub fn init(
     /// Path of channel
     path: i32,
 ) Error!void {
-    if (!options.mock) {
-        try codeToError(mdInit(path));
+    if (comptime !options.mock) {
+        try codeToError(c.mdInit(path));
     }
 }
 
@@ -286,11 +286,11 @@ pub fn waitBdEvent(
     /// Event detail information
     details: *[4]i16,
 ) Error!i16 {
-    if (options.mock) {
+    if (comptime options.mock) {
         return 0;
     } else {
         var driven_event_number: i16 = undefined;
-        try codeToError(mdWaitBdEvent(
+        try codeToError(c.mdWaitBdEvent(
             path,
             eventno.ptr,
             timeout,
@@ -319,8 +319,8 @@ pub fn sendEx(
     data: []const u8,
 ) Error!i32 {
     var local_size: i32 = std.math.lossyCast(i32, data.len);
-    if (!options.mock) {
-        try codeToError(mdSendEx(
+    if (comptime !options.mock) {
+        try codeToError(c.mdSendEx(
             path,
             netno,
             stno,
@@ -351,8 +351,8 @@ pub fn receiveEx(
     data: []u8,
 ) Error!i32 {
     var local_size: i32 = std.math.lossyCast(i32, data.len);
-    if (!options.mock) {
-        try codeToError(mdReceiveEx(
+    if (comptime !options.mock) {
+        try codeToError(c.mdReceiveEx(
             path,
             netno,
             stno,
@@ -378,8 +378,8 @@ pub fn devSetEx(
     /// Specified device number
     devno: i32,
 ) Error!void {
-    if (!options.mock) {
-        try codeToError(mdDevSetEx(
+    if (comptime !options.mock) {
+        try codeToError(c.mdDevSetEx(
             path,
             netno,
             stno,
@@ -402,8 +402,8 @@ pub fn devRstEx(
     /// Specified device number
     devno: i32,
 ) Error!void {
-    if (!options.mock) {
-        try codeToError(mdDevRstEx(
+    if (comptime !options.mock) {
+        try codeToError(c.mdDevRstEx(
             path,
             netno,
             stno,
@@ -427,8 +427,8 @@ pub fn randWEx(
     /// Written data
     buf: []const i16,
 ) Error!void {
-    if (!options.mock) {
-        try codeToError(mdRandWEx(path, netno, stno, dev.ptr, buf.ptr, 0));
+    if (comptime !options.mock) {
+        try codeToError(c.mdRandWEx(path, netno, stno, dev.ptr, buf.ptr, 0));
     }
 }
 
@@ -446,9 +446,9 @@ pub fn randREx(
     /// Read data
     buf: []i16,
 ) Error!void {
-    if (!options.mock) {
+    if (comptime !options.mock) {
         const read_buf_bytes = std.math.lossyCast(i32, buf.len * 2);
-        try codeToError(mdRandREx(
+        try codeToError(c.mdRandREx(
             path,
             netno,
             stno,
@@ -473,9 +473,9 @@ pub fn remBufWriteEx(
     /// Written data
     data: []const i16,
 ) Error!i32 {
-    if (!options.mock) {
+    if (comptime !options.mock) {
         const data_bytes = std.math.lossyCast(i32, data.len * 2);
-        try codeToError(mdRemBufWriteEx(
+        try codeToError(c.mdRemBufWriteEx(
             path,
             netno,
             stno,
@@ -500,9 +500,9 @@ pub fn remBufReadEx(
     /// Read data
     data: []i16,
 ) Error!void {
-    if (!options.mock) {
+    if (comptime !options.mock) {
         const data_bytes = std.math.lossyCast(i32, data.len * 2);
-        try codeToError(mdRemBufReadEx(
+        try codeToError(c.mdRemBufReadEx(
             path,
             netno,
             stno,
@@ -531,343 +531,6 @@ pub const Channel = enum(i16) {
     @"CC-Link IE Field Network (Channel No. 183)" = 183,
     @"CC-Link IE Field Network (Channel No. 184)" = 184,
 };
-
-const WINAPI: std.builtin.CallingConvention = if (target_arch == .x86)
-    .Stdcall
-else
-    .C;
-
-/// Open a communication line by specifying a channel number of communication
-/// line.
-pub extern "MdFunc32" fn mdOpen(
-    /// Channel number of communication line
-    chan: i16,
-    /// Dummy
-    mode: i16,
-    /// Opened line path pointer
-    path: *i32,
-) callconv(WINAPI) i16;
-
-/// Close a communication line by specifying a communication line path.
-pub extern "MdFunc32" fn mdClose(
-    /// Path of channel
-    path: i32,
-) callconv(WINAPI) i16;
-
-/// Close a communication line by specifying a communication line path.
-/// Batch write data to the devices on the target station for the number of
-/// written data bytes from the start device number. / Send data to the
-/// specified channel number of the target station.
-pub extern "MdFunc32" fn mdSend(
-    /// Path of channel
-    path: i32,
-    /// Station number
-    stno: i16,
-    /// Device type
-    devtyp: i16,
-    /// Start device number / Channel number
-    devno: i16,
-    /// Written byte size / Send byte size
-    size: *i16,
-    /// Written data / Send data
-    data: [*]i16,
-) callconv(WINAPI) i16;
-
-/// Batch read data from the devices on the target station for the number of
-/// read data bytes from the start device number. / Read data of the specified
-/// channel number from the data which are received by the own station.
-pub extern "MdFunc32" fn mdReceive(
-    /// Path of channel
-    path: i32,
-    /// Station number
-    stno: i16,
-    /// Device type
-    devtyp: i16,
-    /// Start device number / Channel number
-    devno: i16,
-    /// Read byte size / Receive byte size
-    size: *i16,
-    /// Read data / Receive data with send source information
-    data: [*]i16,
-) callconv(WINAPI) i16;
-
-/// Set the specified bit device on the target station (to ON).
-pub extern "MdFunc32" fn mdDevSet(
-    /// Path of channel
-    path: i32,
-    /// Station number
-    stno: i16,
-    /// Device type
-    devtyp: i16,
-    /// Specified device number
-    devno: i16,
-) callconv(WINAPI) i16;
-
-/// Reset the specified bit device on the target station (to OFF).
-pub extern "MdFunc32" fn mdDevRst(
-    /// Path of channel
-    path: i32,
-    /// Station number
-    stno: i16,
-    /// Device type
-    devtyp: i16,
-    /// Specified device number
-    devno: i16,
-) callconv(WINAPI) i16;
-
-/// Write data to the devices on the target station specified with the
-/// randomly-specified devices.
-pub extern "MdFunc32" fn mdRandW(
-    /// Path of channel
-    path: i32,
-    /// Station number
-    stno: i16,
-    /// Randomly-specified device
-    dev: [*]i16,
-    /// Written data
-    buf: [*]i16,
-    /// Dummy
-    bufsize: i16,
-) callconv(WINAPI) i16;
-
-/// Read the device specified with the randomly-specified devices from the
-/// target station.
-pub extern "MdFunc32" fn mdRandR(
-    /// Path of channel
-    path: i32,
-    /// Station number
-    stno: i16,
-    /// Randomly-specified device
-    dev: [*]i16,
-    /// Read data
-    buf: [*]i16,
-    /// Number of bytes of read data
-    bufsize: i16,
-) callconv(WINAPI) i16;
-
-/// Remotely operate a CPU on the target station. (Remote RUN/STOP/PAUSE)
-pub extern "MdFunc32" fn mdControl(
-    /// Path of channel
-    path: i32,
-    /// Station number
-    stno: i16,
-    /// Command code
-    buf: i16,
-) callconv(WINAPI) i16;
-
-/// Read a model name code of the CPU on the target station.
-pub extern "MdFunc32" fn mdTypeRead(
-    /// Path of channel
-    path: i32,
-    /// Station number
-    stno: i16,
-    /// Model name code
-    buf: *i16,
-) callconv(WINAPI) i16;
-
-/// Read the LED information of the board.
-pub extern "MdFunc32" fn mdBdLedRead(
-    /// Path of channel
-    path: i32,
-    /// Read data
-    buf: [*]i16,
-) callconv(WINAPI) i16;
-
-/// Read the mode in which the board is currently operating.
-pub extern "MdFunc32" fn mdBdModRead(
-    /// Path of channel
-    path: i32,
-    /// Mode
-    mode: *i16,
-) callconv(WINAPI) i16;
-
-/// Change the modes of a board temporarily.
-pub extern "MdFunc32" fn mdBdModSet(
-    /// Path of channel
-    path: i32,
-    /// Mode
-    mode: i16,
-) callconv(WINAPI) i16;
-
-/// Reset a board.
-pub extern "MdFunc32" fn mdBdRst(
-    /// Path of channel
-    path: i32,
-) callconv(WINAPI) i16;
-
-/// Read a board switch status (such as station number setting, board number
-/// setting, board identification, and I/O address setting information).
-pub extern "MdFunc32" fn mdBdSwRead(
-    /// Path of channel
-    path: i32,
-    /// Read data
-    buf: *[6]i16,
-) callconv(WINAPI) i16;
-
-/// Read the version information of the board.
-pub extern "MdFunc32" fn mdBdVerRead(
-    /// Path of channel
-    path: i32,
-    /// Read data
-    buf: *[32]i16,
-) callconv(WINAPI) i16;
-
-/// Refresh a programmable controller device address table which is the
-/// internal data of the MELSEC data link library.
-pub extern "MdFunc32" fn mdInit(
-    /// Path of channel
-    path: i32,
-) callconv(WINAPI) i16;
-
-/// Wait an occurrence of event until the time out.
-pub extern "MdFunc32" fn mdWaitBdEvent(
-    /// Path of channel
-    path: i32,
-    /// Waiting event number
-    eventno: [*]i16,
-    /// Timeout value
-    timeout: i32,
-    /// Driven event number
-    signaledno: *i16,
-    /// Event detail information
-    details: *[4]i16,
-) callconv(WINAPI) i16;
-
-/// Batch write data to the devices on the target station for the number of
-/// written data bytes from the start device number. / Send data to the
-/// specified channel number of the target station.
-pub extern "MdFunc32" fn mdSendEx(
-    /// Path of channel
-    path: i32,
-    /// Network number
-    netno: i32,
-    /// Station number
-    stno: i32,
-    /// Device type
-    devtyp: i32,
-    /// Start device number / Channel number
-    devno: i32,
-    /// Written byte size / Send byte size
-    size: *i32,
-    /// Written data / Send data
-    data: [*]i16,
-) callconv(WINAPI) i32;
-
-/// Batch read data from the devices on the target station for the number of
-/// read data bytes from the start device number. / Read data of the specified
-/// channel number from the data which are received by the own station.
-pub extern "MdFunc32" fn mdReceiveEx(
-    /// Path of channel
-    path: i32,
-    /// Network number
-    netno: i32,
-    /// Station number
-    stno: i32,
-    /// Device type
-    devtyp: i32,
-    /// Start device number / Channel number
-    devno: i32,
-    /// Read byte size / Receive byte size
-    size: *i32,
-    /// Read data / Receive data
-    data: [*]i16,
-) callconv(WINAPI) i32;
-
-/// Set the specified bit device on the target station (to ON).
-pub extern "MdFunc32" fn mdDevSetEx(
-    /// Path of channel
-    path: i32,
-    /// Network number
-    netno: i32,
-    /// Station number
-    stno: i32,
-    /// Device type
-    devtyp: i32,
-    /// Specified device number
-    devno: i32,
-) callconv(WINAPI) i32;
-
-/// Reset the specified bit device on the target station (to OFF).
-pub extern "MdFunc32" fn mdDevRstEx(
-    /// Path of channel
-    path: i32,
-    /// Network number
-    netno: i32,
-    /// Station number
-    stno: i32,
-    /// Device type
-    devtyp: i32,
-    /// Specified device number
-    devno: i32,
-) callconv(WINAPI) i32;
-
-/// Write data to the devices on the target station specified with the
-/// randomly-specified devices.
-pub extern "MdFunc32" fn mdRandWEx(
-    /// Path of channel
-    path: i32,
-    /// Network number
-    netno: i32,
-    /// Station number
-    stno: i32,
-    /// Randomly-specified device
-    dev: [*]i32,
-    /// Written data
-    buf: [*]i16,
-    /// Dummy
-    bufsize: i32,
-) callconv(WINAPI) i32;
-
-/// Read the device specified with the randomly-specified devices from the
-/// target station.
-pub extern "MdFunc32" fn mdRandREx(
-    /// Path of channel
-    path: i32,
-    /// Network number
-    netno: i32,
-    /// Station number
-    stno: i32,
-    /// Randomly-specified device
-    dev: [*]i32,
-    /// Read data
-    buf: [*]i16,
-    /// Number of bytes of read data
-    bufsize: i32,
-) callconv(WINAPI) i32;
-
-/// Write data to the buffer memory of a target station (remote device station
-/// of CC-Link IE Field Network).
-pub extern "MdFunc32" fn mdRemBufWriteEx(
-    /// Path of channel
-    path: i32,
-    /// Network number
-    netno: i32,
-    /// Station number
-    stno: i32,
-    /// Offset
-    offset: i32,
-    /// Written byte size
-    size: *i32,
-    /// Written data
-    data: [*]i16,
-) callconv(WINAPI) i32;
-
-/// Read data from the buffer memory of a target station (remote device station
-/// of CC-Link IE Field Network).
-pub extern "MdFunc32" fn mdRemBufReadEx(
-    /// Path of channel
-    path: i32,
-    /// Network number
-    netno: i32,
-    /// Station number
-    stno: i32,
-    /// Offset
-    offset: i32,
-    /// Read byte size
-    size: *i32,
-    /// Read data
-    data: [*]i16,
-) callconv(WINAPI) i32;
 
 pub const Device = def: {
     var result = std.builtin.Type.Enum{
