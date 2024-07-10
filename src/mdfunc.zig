@@ -483,7 +483,9 @@ pub fn remBufWriteEx(
             &data_bytes,
             data.ptr,
         ));
+        return data_bytes;
     }
+    return 0;
 }
 
 /// Read data from the buffer memory of a target station (remote device station
@@ -897,4 +899,8 @@ pub inline fn codeToError(code: i32) Error!void {
         -28636 => return Error.@"-28636: Hardware self-diagnosis error",
         else => return Error.@"Unknown MELSEC Data Link Library error",
     }
+}
+
+test {
+    std.testing.refAllDeclsRecursive(@This());
 }
