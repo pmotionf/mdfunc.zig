@@ -535,6 +535,7 @@ pub const Channel = enum(i16) {
 };
 
 pub const Device = def: {
+    @setEvalBranchQuota(6_500);
     var result = std.builtin.Type.Enum{
         .tag_type = i16,
         .fields = &.{
