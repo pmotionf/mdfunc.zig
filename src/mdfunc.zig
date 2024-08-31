@@ -666,7 +666,7 @@ pub const Device = def: {
             },
         };
     }
-    break :def @Type(.{ .Enum = result });
+    break :def @Type(.{ .@"enum" = result });
 };
 
 pub const Error = error{

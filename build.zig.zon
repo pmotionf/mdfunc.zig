@@ -1,7 +1,7 @@
 .{
     .name = "mdfunc",
-    .version = "0.0.4",
-    .minimum_zig_version = "0.13.0-dev.351+64ef45eb0",
+    .version = "0.0.5",
+    .minimum_zig_version = "0.14.0-dev.1392+37df6ba86",
     .paths = .{
         "build.zig",
         "build.zig.zon",
