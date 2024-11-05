@@ -97,9 +97,9 @@ pub extern "MdFunc32" fn mdRandW(
     /// Station number
     stno: i16,
     /// Randomly-specified device
-    dev: [*]i16,
+    dev: [*]const i16,
     /// Written data
-    buf: [*]i16,
+    buf: [*]const i16,
     /// Dummy
     bufsize: i16,
 ) callconv(WINAPI) i16;
@@ -112,7 +112,7 @@ pub extern "MdFunc32" fn mdRandR(
     /// Station number
     stno: i16,
     /// Randomly-specified device
-    dev: [*]i16,
+    dev: [*]const i16,
     /// Read data
     buf: [*]i16,
     /// Number of bytes of read data
@@ -198,7 +198,7 @@ pub extern "MdFunc32" fn mdWaitBdEvent(
     /// Path of channel
     path: i32,
     /// Waiting event number
-    eventno: [*]i16,
+    eventno: [*]const i16,
     /// Timeout value
     timeout: i32,
     /// Driven event number
@@ -285,9 +285,9 @@ pub extern "MdFunc32" fn mdRandWEx(
     /// Station number
     stno: i32,
     /// Randomly-specified device
-    dev: [*]i32,
+    dev: [*]const i32,
     /// Written data
-    buf: [*]i16,
+    buf: [*]const i16,
     /// Dummy
     bufsize: i32,
 ) callconv(WINAPI) i32;
@@ -302,7 +302,7 @@ pub extern "MdFunc32" fn mdRandREx(
     /// Station number
     stno: i32,
     /// Randomly-specified device
-    dev: [*]i32,
+    dev: [*]const i32,
     /// Read data
     buf: [*]i16,
     /// Number of bytes of read data
@@ -323,7 +323,7 @@ pub extern "MdFunc32" fn mdRemBufWriteEx(
     /// Written byte size
     size: *i32,
     /// Written data
-    data: [*]i16,
+    data: [*]const i16,
 ) callconv(WINAPI) i32;
 
 /// Read data from the buffer memory of a target station (remote device station

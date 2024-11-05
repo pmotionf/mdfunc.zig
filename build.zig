@@ -26,7 +26,7 @@ pub fn build(b: *std.Build) void {
         []const u8,
         "mdfunc",
         "Specify the path to the MELSEC static library artifact.",
-    ) orelse "lib/MdFunc32.lib";
+    ) orelse "vendor/mdfunc/lib/x64/MdFunc32.lib";
 
     const options = b.addOptions();
     options.addOption(

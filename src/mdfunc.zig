@@ -474,7 +474,7 @@ pub fn remBufWriteEx(
     data: []const i16,
 ) Error!i32 {
     if (comptime !options.mock) {
-        const data_bytes = std.math.lossyCast(i32, data.len * 2);
+        var data_bytes = std.math.lossyCast(i32, data.len * 2);
         try codeToError(c.mdRemBufWriteEx(
             path,
             netno,
@@ -503,7 +503,7 @@ pub fn remBufReadEx(
     data: []i16,
 ) Error!void {
     if (comptime !options.mock) {
-        const data_bytes = std.math.lossyCast(i32, data.len * 2);
+        var data_bytes = std.math.lossyCast(i32, data.len * 2);
         try codeToError(c.mdRemBufReadEx(
             path,
             netno,
