@@ -337,3 +337,7 @@ pub extern "MdFunc32" fn mdRemBufReadEx(
     /// Read data
     data: [*]i16,
 ) callconv(.winapi) i32;
+
+test {
+    std.testing.refAllDecls(@This());
+}
