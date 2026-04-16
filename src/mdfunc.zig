@@ -46,7 +46,7 @@ pub fn send(
             @intFromEnum(devtyp),
             devno,
             &local_size,
-            @constCast(@ptrCast(@alignCast(data.ptr))),
+            @ptrCast(@alignCast(@constCast(data.ptr))),
         ));
     }
     return local_size;
@@ -327,7 +327,7 @@ pub fn sendEx(
             @intFromEnum(devtyp),
             devno,
             &local_size,
-            @constCast(@ptrCast(@alignCast(data.ptr))),
+            @ptrCast(@alignCast(@constCast(data.ptr))),
         ));
     }
     return local_size;
@@ -536,6 +536,7 @@ pub const Channel = enum(i16) {
 
 pub const Device = def: {
     @setEvalBranchQuota(300_000);
+
     var result = std.builtin.Type.Enum{
         .tag_type = i16,
         .fields = &.{
@@ -666,7 +667,18 @@ pub const Device = def: {
             },
         };
     }
-    break :def @Type(.{ .@"enum" = result });
+    var field_names: [result.fields.len][]const u8 = @splat(&.{});
+    var field_values: [result.fields.len]result.tag_type = @splat(0);
+    for (result.fields, 0..) |enum_field, i| {
+        field_names[i] = enum_field.name;
+        field_values[i] = enum_field.value;
+    }
+    break :def @Enum(
+        result.tag_type,
+        if (result.is_exhaustive) .exhaustive else .nonexhaustive,
+        &field_names,
+        &field_values,
+    );
 };
 
 pub const Error = error{
@@ -903,5 +915,5 @@ pub inline fn codeToError(code: i32) Error!void {
 }
 
 test {
-    std.testing.refAllDeclsRecursive(@This());
+    std.testing.refAllDecls(@This());
 }
